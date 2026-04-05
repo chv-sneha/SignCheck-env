@@ -133,7 +133,7 @@ class SignCheckEnv:
         delay_penalty = 1.0 if action == Action.WAIT_AND_MONITOR else 0.0
         
         total = (stability_delta * 0.3) + (action_bonus * 0.2) - (delay_penalty * 0.05) + escalation_bonus
-        return round(max(0.0, min(1.0, total)), 3)
+        return round(max(-1.0, min(1.0, total)), 3)
 
     def _check_terminal(self) -> Tuple[bool, PatientOutcome]:
         criticals = check_critical(self.vitals)
@@ -168,7 +168,13 @@ class SignCheckEnv:
             
         prev_vitals = copy.deepcopy(self.vitals)
         action_bonus = 0.0
-        
+
+        # Apply continuous drift FIRST
+        cascading_effects = {}
+        if not self.drift_frozen:
+            drifts = self.scenario.get("drift_rates", {})
+            self.vitals, cascading_effects = apply_drift(self.vitals, drifts, noise=True)
+
         # Support basic interventions
         intervention = get_intervention_effect(self.scenario, action)
         if "spo2" in intervention:
@@ -214,12 +220,6 @@ class SignCheckEnv:
         # Reset observation timers
         if action in [Action.CHECK_EQUIPMENT, Action.CHECK_PATIENT_AIRWAY, Action.WAIT_AND_MONITOR]:
             self.time_since_last_vitals_check = 0
-
-        # Apply continuous drift
-        cascading_effects = {}
-        if not self.drift_frozen:
-            drifts = self.scenario.get("drift_rates", {})
-            self.vitals, cascading_effects = apply_drift(self.vitals, drifts, noise=True)
             
         # Compile text strings
         self.last_action_feedback = self._get_action_feedback(action)

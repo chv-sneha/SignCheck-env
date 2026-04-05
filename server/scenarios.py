@@ -102,9 +102,9 @@ def get_scenario(task_id: int) -> Dict[str, Any]:
             "initial_vitals": {
                 "spo2": 90.0,
                 "heart_rate": 140, 
-                "bp_systolic": 95,
-                "bp_diastolic": 60,
-                "resp_rate": 28,
+                "bp_systolic": 100,
+                "bp_diastolic": 68,
+                "resp_rate": 26,
                 "temperature": 36.5,
                 "consciousness": "Voice"
             },
@@ -127,7 +127,7 @@ def get_scenario(task_id: int) -> Dict[str, Any]:
                     }
                 },
                 Action.START_MANUAL_BAGGING: {"spo2": 2.0},
-                Action.CALL_ATTENDING_DOCTOR: {"_trap_code": "wrong_escalation"}
+                Action.CALL_ATTENDING_DOCTOR: {"doctor_alerted": True, "_trap_code": "wrong_escalation"}
             },
             "equipment_status_initial": {
                 "monitor": "showing VFib pattern", 
