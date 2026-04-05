@@ -15,11 +15,11 @@ class VitalSigns:
 @dataclass
 class VitalThresholds:
     spo2_low: float = 88.0
-    heart_rate_high: int = 140
+    heart_rate_high: int = 160
     heart_rate_low: int = 45
     bp_systolic_low: int = 90
     bp_systolic_high: int = 180
-    bp_diastolic_low: int = 60
+    bp_diastolic_low: int = 50
     bp_diastolic_high: int = 110
     resp_rate_low: int = 8
     resp_rate_high: int = 30
@@ -31,8 +31,7 @@ def apply_drift(vitals: VitalSigns, drift_rates: Dict[str, float], noise: bool =
     def _add_noise(base: float, amount: float) -> float:
         return base + amount + (random.gauss(0, 0.5) if noise else 0.0)
     
-    # Store previous for logic checks
-    prev_spo2 = vitals.spo2
+    # Store previous HR for cascade logic
     prev_hr = vitals.heart_rate
 
     # Calculate new values
@@ -46,8 +45,8 @@ def apply_drift(vitals: VitalSigns, drift_rates: Dict[str, float], noise: bool =
     effects = {}
     
     # Cascading Consequences:
-    # If spo2 dropped below 88 previously, consciousness degrades one level this call
-    if prev_spo2 < 88.0:
+    # If current spo2 (after drift) is below 88, consciousness degrades one level
+    if vitals.spo2 < 88.0:
         if vitals.consciousness == "Alert":
             vitals.consciousness = "Voice"
             effects["consciousness_degraded"] = "SpO2 < 88%: Consciousness degraded to Voice."
@@ -56,7 +55,7 @@ def apply_drift(vitals: VitalSigns, drift_rates: Dict[str, float], noise: bool =
             effects["consciousness_degraded"] = "SpO2 < 88%: Consciousness degraded to Pain."
         elif vitals.consciousness == "Pain":
             vitals.consciousness = "Unresponsive"
-            effects["consciousness_degraded"] = "SpO2 < 88%: Consciousness degraded to Unresponsive."
+            effects["consciousness_degraded"] = "SpO2 < 88%: Consciousness degraded to Unresponsive."  
 
     # If heart_rate exceeds 150 previously, bp_systolic drops by 3 this call
     if prev_hr > 150:

@@ -1,10 +1,9 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 from typing import List, Dict, Any
 from .models import Action, PatientOutcome
 from .vitals import compute_stability_score, VitalSigns
 
-@dataclass
-class GradeResult:
+class GradeResult(BaseModel):
     final_score: float
     survival_score: float
     stability_score: float
