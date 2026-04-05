@@ -1,0 +1,14 @@
+name: signcheck_env
+tasks:
+  - task_id: 1
+    name: "Task 1: Power failure"
+    difficulty: easy
+    description: "Slow vital degradation over ~25 steps requiring backup power transition or alternative care."
+  - task_id: 2
+    name: "Task 2: Ventilator equipment malfunction"
+    difficulty: medium
+    description: "Agent must distinguish equipment fault from patient fault before intervening."
+  - task_id: 3
+    name: "Task 3: Sudden cardiac event"
+    difficulty: hard
+    description: "Requires correct escalation sequence in ~8 steps before irreversible damage occurs."
