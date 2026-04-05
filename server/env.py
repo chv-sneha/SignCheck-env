@@ -139,6 +139,8 @@ class SignCheckEnv:
         criticals = check_critical(self.vitals)
         
         if len(criticals) >= 2:
+            if self.vitals.consciousness == "Unresponsive":
+                return True, PatientOutcome.DECEASED
             return True, PatientOutcome.CRITICAL
             
         if self.step_count >= self.scenario["max_steps"]:
@@ -185,18 +187,18 @@ class SignCheckEnv:
             self.equipment_status["monitor"] = "alarms_silenced"
 
         if "doctor_alerted" in intervention and not self.doctor_called:
+            self.doctor_called = True
+            self.doctor_eta = self.scenario.get("doctor_eta_initial", 5)
             if intervention.get("_trap_code") == "wrong_escalation":
-                action_bonus = -2.5 # large penalty mapping to -0.5 overall
-            else:
-                self.doctor_called = True
-                self.doctor_eta = self.scenario.get("doctor_eta_initial", 5)
+                self.doctor_eta *= 2 # delayed arrival as punishment
+                action_bonus = -2.5
         
         # Support special med logic from hard scenario
         spec_med = intervention.get("_special_med_effect", {})
         if spec_med:
             if random.random() < spec_med.get("hr_stabilize_chance", 0.0):
                 self.vitals.heart_rate += spec_med.get("hr_stabilize_val", 0)
-                action_bonus += 2.5 # maps to +0.5 overall
+                action_bonus += 2.5
             elif random.random() < spec_med.get("bp_crash_chance", 0.0):
                 self.vitals.bp_systolic += spec_med.get("bp_crash_val", 0)
                 action_bonus -= 2.5
@@ -205,9 +207,9 @@ class SignCheckEnv:
         if self.task_id == 2:
             if self.false_alarm_is_sensor_error:
                 if action == Action.CHECK_EQUIPMENT:
-                    action_bonus += 0.75 # mapping to +0.15
+                    action_bonus += 0.75
                 elif action == Action.START_MANUAL_BAGGING and Action.CHECK_EQUIPMENT not in self.action_history:
-                    action_bonus -= 0.5 # mapping to -0.1
+                    action_bonus -= 0.5
                     
         # Reset observation timers
         if action in [Action.CHECK_EQUIPMENT, Action.CHECK_PATIENT_AIRWAY, Action.WAIT_AND_MONITOR]:
