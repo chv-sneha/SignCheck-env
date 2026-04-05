@@ -110,7 +110,7 @@ def get_scenario(task_id: int) -> Dict[str, Any]:
             },
             "drift_rates": {
                 "spo2": -1.5,
-                "heart_rate": 15.0, # Added high directional drift; noise will be overlaid in env
+                "heart_rate": 5.0, # Fixed HR drift per instruction
                 "bp_systolic": -4.0,
                 "bp_diastolic": -2.0,
                 "resp_rate": 3.0,
@@ -150,3 +150,6 @@ def get_scenario(task_id: int) -> Dict[str, Any]:
 
 def get_all_scenarios() -> List[Dict[str, Any]]:
     return [get_scenario(1), get_scenario(2), get_scenario(3)]
+
+def get_intervention_effect(scenario: Dict[str, Any], action: Action) -> Dict[str, Any]:
+    return scenario["action_interventions"].get(action, {})
