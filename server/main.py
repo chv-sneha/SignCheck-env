@@ -10,7 +10,10 @@ from .vitals import VitalSigns
 from .scenarios import get_all_scenarios
 from .grader import grade_episode, GradeResult
 
-app = FastAPI(title="SignCheck-env")
+app = FastAPI(
+    title="SignCheck-Env: ICU Emergency Response RL Environment",
+    description="An OpenEnv reinforcement learning environment where an AI agent stabilizes a patient during hospital emergencies until a doctor arrives."
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,21 +39,26 @@ def startup_event():
     env.reset(1)
     vital_log = [copy.deepcopy(env.vitals)]
 
-@app.get("/health")
+@app.get("/health", summary="Health Check")
 def health():
+    """Returns the basic health status of the API server."""
     return {"status": "ok"}
 
-@app.get("/")
+@app.get("/", summary="Root Endpoint")
 def root():
+    """Returns a simple JSON message containing the project name, a short description, and a link to /docs."""
     return {
-        "message": "Welcome to SignCheck-Env: ICU Emergency Response RL Environment",
+        "project": "SignCheck-Env",
+        "description": "ICU Emergency Response RL Environment",
+        "message": "Welcome to SignCheck-Env! Please visit /docs for interactive documentation.",
         "docs_url": "/docs",
         "endpoints": ["/reset", "/step", "/state", "/grade", "/tasks"]
     }
 
 
-@app.get("/tasks")
+@app.get("/tasks", summary="List Tasks")
 def get_tasks():
+    """Returns a list of all available ICU emergency scenarios and their details."""
     scenarios = get_all_scenarios()
     return [{
         "task_id": s["task_id"],
@@ -60,11 +68,11 @@ def get_tasks():
         "max_steps": s["max_steps"]
     } for s in scenarios]
 
-@app.post("/reset", response_model=ResetResult)
+@app.post("/reset", response_model=ResetResult, summary="Start New Episode")
 def reset_env(params: ResetParams):
     """
-    Resets the environment to a specific Task ID.
-    Returns: initial Observation and task setup data.
+    Starts a new episode for the specified Task ID.
+    Returns the initial patient observation and the scenario context.
     """
     global vital_log
     try:
@@ -74,12 +82,12 @@ def reset_env(params: ResetParams):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/step", response_model=StepResult)
+@app.post("/step", response_model=StepResult, summary="Apply Action to Environment")
 def step_env(params: StepParams):
     """
-    Applies the specified Action to the state instance.
-    Calculates drift, triggers consequences, and scores the current turn.
-    Returns: new Observation, Reward, and Terminal Done flag.
+    Applies an action to the environment, updates the patient vitals using the simulator, 
+    and steps the simulation time forward. 
+    Returns the new observation, the generated reward, and the done flag determining if the episode is finished.
     """
     try:
         action_enum = Action(params.action)
@@ -93,17 +101,16 @@ def step_env(params: StepParams):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/state")
+@app.get("/state", summary="Get Current State")
 def state():
-    """Returns the raw internal dictionary state (vitals, history, metadata)."""
+    """Retrieves the raw internal dictionary state safely without advancing the simulation clock."""
     return env.state()
 
-@app.post("/grade", response_model=GradeResult)
+@app.post("/grade", response_model=GradeResult, summary="Grade Episode")
 def grade():
     """
-    Grades the entire previous episode based on final outcome, history, 
-    and task stability thresholds. 
-    Returns: Component metrics and final 0-1 score block.
+    Evaluates the agent's complete performance for the current episode 
+    and returns deterministic grading metrics between 0 and 1.
     """
     if env.scenario is None:
         raise HTTPException(status_code=400, detail="Environment not initialized.")

@@ -46,15 +46,68 @@ class Reward(BaseModel):
     reward: float
     message: str
 
-# info dict will always contain:
-# {"survival": float, "stability": float, "escalation": float, "efficiency": float, "outcome": str}
 class StepResult(BaseModel):
     observation: Observation
     reward: float
     done: bool
     info: dict
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "observation": {
+                    "spo2": 95.0,
+                    "heart_rate": 85,
+                    "bp_systolic": 120,
+                    "bp_diastolic": 80,
+                    "resp_rate": 18,
+                    "temperature": 37.0,
+                    "consciousness": "Alert",
+                    "equipment_status": {"ventilator": "OK", "power": "OK"},
+                    "power_status": "Normal",
+                    "time_elapsed": 10,
+                    "time_since_last_vitals_check": 0,
+                    "doctor_eta": 15,
+                    "clinical_notes": "Patient stable following medication.",
+                    "last_action_feedback": "Administered O2, SpO2 improving.",
+                    "step_count": 1,
+                    "patient_outcome": "stable"
+                },
+                "reward": 1.0,
+                "done": False,
+                "info": {"outcome": "Ongoing"}
+            }
+        }
+    }
+
 class ResetResult(BaseModel):
     observation: Observation
     task_id: int
     task_description: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "observation": {
+                    "spo2": 98.0,
+                    "heart_rate": 72,
+                    "bp_systolic": 118,
+                    "bp_diastolic": 76,
+                    "resp_rate": 16,
+                    "temperature": 36.8,
+                    "consciousness": "Alert",
+                    "equipment_status": {"ventilator": "OK", "power": "OK"},
+                    "power_status": "Normal",
+                    "time_elapsed": 0,
+                    "time_since_last_vitals_check": 0,
+                    "doctor_eta": None,
+                    "clinical_notes": "Initial patient assessment complete.",
+                    "last_action_feedback": "None",
+                    "step_count": 0,
+                    "patient_outcome": "stable"
+                },
+                "task_id": 1,
+                "task_description": "Task 1: Power Failure simulation."
+            }
+        }
+    }
